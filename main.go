@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -10,6 +9,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/alecthomas/template"
 )
 
 type Stat struct {
@@ -32,8 +33,7 @@ func main() {
 		go visit(url, &stats, &wg)
 	}
 	wg.Wait()
-	output := sumarize(stats)
-	fmt.Fprintf(os.Stdout, "Media: %s segundos\n", output)
+	sumarize(stats)
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
@@ -73,6 +73,9 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 		log.Fatalf("request failed: %v", err)
 	}
 	done = time.Now()
+	if transferInit.IsZero() {
+		transferInit = done
+	}
 	if dnsStart.IsZero() {
 		dnsStart = dnsDone
 	}
@@ -89,7 +92,7 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	*stats = iStats
 }
 
-func sumarize(stats []Stat) string {
+func sumarize(stats []Stat) {
 	summ := Stat{}
 	for _, s := range stats {
 		summ.DNSLookup = time.Duration(summ.DNSLookup.Nanoseconds() + s.DNSLookup.Nanoseconds())
@@ -99,7 +102,18 @@ func sumarize(stats []Stat) string {
 		summ.ContentTransfer = time.Duration(summ.ContentTransfer.Nanoseconds() + s.ContentTransfer.Nanoseconds())
 		summ.Total = time.Duration(summ.Total.Nanoseconds() + s.Total.Nanoseconds())
 	}
-	meanTotal := summ.Total.Seconds() / float64(len(stats))
-	println(meanTotal)
-	return strconv.FormatFloat(meanTotal, 'e', 3, 64)
+	summ.DNSLookup = time.Duration((summ.DNSLookup.Nanoseconds() / int64(len(stats))))
+	summ.TCPConnection = time.Duration((summ.TCPConnection.Nanoseconds() / int64(len(stats))))
+	summ.TLSHandshake = time.Duration((summ.TLSHandshake.Nanoseconds() / int64(len(stats))))
+	summ.ServerProccesing = time.Duration((summ.ServerProccesing.Nanoseconds() / int64(len(stats))))
+	summ.ContentTransfer = time.Duration((summ.ContentTransfer.Nanoseconds() / int64(len(stats))))
+	summ.Total = time.Duration((summ.Total.Nanoseconds() / int64(len(stats))))
+	sumaryTmpl := `Average request time: {{.Total.Seconds }}s
+DNS Lookup: {{ .DNSLookup.Seconds }}s
+TCP Connections: {{ .TCPConnection.Seconds }}s
+Server Procesing: {{ .ServerProccesing.Seconds }}s
+Server Tranfer: {{ .ContentTransfer.Seconds }}s
+`
+	tmpl, _ := template.New("summary").Parse(sumaryTmpl)
+	tmpl.Execute(os.Stdout, summ)
 }
