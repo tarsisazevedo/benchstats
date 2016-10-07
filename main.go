@@ -32,7 +32,8 @@ func main() {
 		go visit(url, &stats, &wg)
 	}
 	wg.Wait()
-	fmt.Printf("Stats: %#v", stats)
+	output := sumarize(stats)
+	fmt.Fprintf(os.Stdout, "Media: %s segundos\n", output)
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
@@ -87,4 +88,18 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	iStats = append(iStats, stat)
 	*stats = iStats
 }
+
+func sumarize(stats []Stat) string {
+	summ := Stat{}
+	for _, s := range stats {
+		summ.DNSLookup = time.Duration(summ.DNSLookup.Nanoseconds() + s.DNSLookup.Nanoseconds())
+		summ.TCPConnection = time.Duration(summ.TCPConnection.Nanoseconds() + s.TCPConnection.Nanoseconds())
+		summ.TLSHandshake = time.Duration(summ.TLSHandshake.Nanoseconds() + s.TLSHandshake.Nanoseconds())
+		summ.ServerProccesing = time.Duration(summ.ServerProccesing.Nanoseconds() + s.ServerProccesing.Nanoseconds())
+		summ.ContentTransfer = time.Duration(summ.ContentTransfer.Nanoseconds() + s.ContentTransfer.Nanoseconds())
+		summ.Total = time.Duration(summ.Total.Nanoseconds() + s.Total.Nanoseconds())
+	}
+	meanTotal := summ.Total.Seconds() / float64(len(stats))
+	println(meanTotal)
+	return strconv.FormatFloat(meanTotal, 'e', 3, 64)
 }
