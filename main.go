@@ -26,16 +26,10 @@ func main() {
 	stats := []Stat{}
 	ts := os.Args[2]
 	t, _ := strconv.Atoi(ts)
-	duration := time.Duration(t) * time.Minute
-	start := time.Now()
 	var wg sync.WaitGroup
-	for {
-		elapsed := time.Since(start)
-		fmt.Printf("%#v\n%#v\n", elapsed.Minutes(), duration.Minutes())
-		if elapsed >= duration {
-			break
-		}
-		go visit(url, stats, &wg)
+	for i := 0; i < t; i++ {
+		wg.Add(1)
+		go visit(url, &stats, &wg)
 	}
 	wg.Wait()
 	fmt.Printf("Stats: %#v", stats)
