@@ -35,8 +35,7 @@ func main() {
 	fmt.Printf("Stats: %#v", stats)
 }
 
-func visit(url string, stats []Stat, wg *sync.WaitGroup) {
-	wg.Add(1)
+func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	var dnsStart, dnsDone, connDone, gotConn, transferInit, done time.Time
 	defer wg.Done()
 	req, _ := http.NewRequest("GET", url, nil)
@@ -84,5 +83,8 @@ func visit(url string, stats []Stat, wg *sync.WaitGroup) {
 		ContentTransfer:  done.Sub(transferInit),
 		Total:            done.Sub(dnsStart),
 	}
-	stats = append(stats, stat)
+	iStats := *stats
+	iStats = append(iStats, stat)
+	*stats = iStats
+}
 }
