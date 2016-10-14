@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -33,7 +34,7 @@ func main() {
 		go visit(url, &stats, &wg)
 	}
 	wg.Wait()
-	sumarize(stats)
+	sumarize(stats, os.Stdout)
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
@@ -92,7 +93,7 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	*stats = iStats
 }
 
-func sumarize(stats []Stat) {
+func sumarize(stats []Stat, w io.Writer) {
 	summ := Stat{}
 	for _, s := range stats {
 		summ.DNSLookup = time.Duration(summ.DNSLookup.Nanoseconds() + s.DNSLookup.Nanoseconds())
@@ -115,5 +116,5 @@ Server Procesing: {{ .ServerProccesing.Seconds }}s
 Server Tranfer: {{ .ContentTransfer.Seconds }}s
 `
 	tmpl, _ := template.New("summary").Parse(sumaryTmpl)
-	tmpl.Execute(os.Stdout, summ)
+	tmpl.Execute(w, summ)
 }
