@@ -2,17 +2,20 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/alecthomas/template"
 )
+
+var nc = flag.Int("c", 0, "number of connections")
 
 type Stat struct {
 	DNSLookup        time.Duration
@@ -23,13 +26,26 @@ type Stat struct {
 	Total            time.Duration
 }
 
+func Usage() {
+	fmt.Printf("Usage: %s [OPTIONS] url\n", os.Args[0])
+	flag.PrintDefaults()
+}
+
 func main() {
-	url := os.Args[1]
+	flag.Usage = Usage
+	flag.Parse()
+
+	if len(flag.Args()) == 0 || *nc == 0 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	args := flag.Args()
 	stats := []Stat{}
-	ts := os.Args[2]
-	t, _ := strconv.Atoi(ts)
+	url := args[0]
+
 	var wg sync.WaitGroup
-	for i := 0; i < t; i++ {
+	for i := 0; i < *nc; i++ {
 		wg.Add(1)
 		go visit(url, &stats, &wg)
 	}
