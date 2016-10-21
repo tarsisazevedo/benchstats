@@ -8,7 +8,7 @@ env:
     - GOARCH=amd64
     - GO_FOR_RELEASE=1.7.1
 script:
-  - make test
+  - go test
 notifications:
   email:
     on_success: change
