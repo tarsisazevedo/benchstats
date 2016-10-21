@@ -14,6 +14,7 @@ func TestVisitURL(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	visit(server.URL, &stat, &wg)
+	wg.Wait()
 	if len(stat) == 0 {
 		t.Fatalf("Got Error. Expecting one stat, got zero.")
 	}

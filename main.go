@@ -40,7 +40,10 @@ func main() {
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	var dnsStart, dnsDone, connDone, gotConn, transferInit, done time.Time
 	defer wg.Done()
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalf("new request failed: %v", err)
+	}
 	trace := &httptrace.ClientTrace{
 		DNSStart: func(_ httptrace.DNSStartInfo) { dnsStart = time.Now() },
 		DNSDone:  func(_ httptrace.DNSDoneInfo) { dnsDone = time.Now() },
@@ -69,7 +72,7 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	client := &http.Client{
 		Transport: tr,
 	}
-	_, err := client.Do(req)
+	_, err = client.Do(req)
 	if err != nil {
 		log.Fatalf("request failed: %v", err)
 	}
