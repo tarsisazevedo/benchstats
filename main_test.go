@@ -40,3 +40,34 @@ Server Tranfer: 0.4s
 		t.Fatalf("Wrong sumary")
 	}
 }
+
+func runMainForTest(t *testing.T, wantedExit int, args ...string) {
+	exit := Main(args...)
+
+	if exit != wantedExit {
+		t.Fatalf("got exit code %d, but wanted %d", exit, wantedExit)
+	}
+}
+
+func TestCallWithoutConnectionFlag(t *testing.T) {
+
+	called := false
+	usage = func() { called = true }
+
+	runMainForTest(t, 1, "http://dummydomain.com")
+
+	if !called {
+		t.Error("should call usage without -c flag")
+	}
+}
+
+func TestCallWithoutUrl(t *testing.T) {
+	called := false
+	usage = func() { called = true }
+
+	runMainForTest(t, 1, "-c", "10")
+
+	if !called {
+		t.Error("should call usage wihout url")
+	}
+}

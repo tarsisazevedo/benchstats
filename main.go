@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
+	"github.com/alecthomas/template"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
 	"os"
-	"strconv"
 	"sync"
 	"time"
-
-	"github.com/alecthomas/template"
 )
 
 type Stat struct {
@@ -23,18 +23,48 @@ type Stat struct {
 	Total            time.Duration
 }
 
+var fs *flag.FlagSet
+
+var usage = func() {
+	fmt.Printf("Usage: %s [OPTIONS] url\n", os.Args[0])
+	fs.PrintDefaults()
+}
+
 func main() {
-	url := os.Args[1]
+	os.Exit(Main(os.Args[1:]...))
+}
+
+func Main(args ...string) int {
+
+	fs = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	nc := fs.Int("c", 0, "number of connections")
+
+	fs.Usage = usage
+	err := fs.Parse(args)
+	fsArgs := fs.Args()
+
+	if err != nil {
+		return 2
+	}
+
+	if len(fsArgs) == 0 || *nc == 0 {
+		fs.Usage()
+		return 1
+	}
+
 	stats := []Stat{}
-	ts := os.Args[2]
-	t, _ := strconv.Atoi(ts)
+	url := fsArgs[0]
+
+	fmt.Println(fsArgs)
 	var wg sync.WaitGroup
-	for i := 0; i < t; i++ {
+	for i := 0; i < *nc; i++ {
 		wg.Add(1)
 		go visit(url, &stats, &wg)
 	}
 	wg.Wait()
 	sumarize(stats, os.Stdout)
+
+	return 0
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
