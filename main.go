@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/alecthomas/template"
 	"io"
 	"log"
 	"net/http"
@@ -11,11 +12,7 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"github.com/alecthomas/template"
 )
-
-var nc = flag.Int("c", 0, "number of connections")
 
 type Stat struct {
 	DNSLookup        time.Duration
@@ -26,24 +23,39 @@ type Stat struct {
 	Total            time.Duration
 }
 
-func Usage() {
+var fs *flag.FlagSet
+
+var usage = func() {
 	fmt.Printf("Usage: %s [OPTIONS] url\n", os.Args[0])
-	flag.PrintDefaults()
+	fs.PrintDefaults()
 }
 
 func main() {
-	flag.Usage = Usage
-	flag.Parse()
+	os.Exit(Main(os.Args[1:]...))
+}
 
-	if len(flag.Args()) == 0 || *nc == 0 {
-		flag.Usage()
-		os.Exit(1)
+func Main(args ...string) int {
+
+	fs = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	nc := fs.Int("c", 0, "number of connections")
+
+	fs.Usage = usage
+	err := fs.Parse(args)
+	fsArgs := fs.Args()
+
+	if err != nil {
+		return 2
 	}
 
-	args := flag.Args()
-	stats := []Stat{}
-	url := args[0]
+	if len(fsArgs) == 0 || *nc == 0 {
+		fs.Usage()
+		return 1
+	}
 
+	stats := []Stat{}
+	url := fsArgs[0]
+
+	fmt.Println(fsArgs)
 	var wg sync.WaitGroup
 	for i := 0; i < *nc; i++ {
 		wg.Add(1)
@@ -51,6 +63,8 @@ func main() {
 	}
 	wg.Wait()
 	sumarize(stats, os.Stdout)
+
+	return 0
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
