@@ -55,7 +55,6 @@ func Main(args ...string) int {
 	stats := []Stat{}
 	url := fsArgs[0]
 
-	fmt.Println(fsArgs)
 	var wg sync.WaitGroup
 	for i := 0; i < *nc; i++ {
 		wg.Add(1)
