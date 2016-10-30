@@ -38,7 +38,7 @@ func main() {
 func Main(args ...string) int {
 
 	fs = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	nc := fs.Int("c", 0, "number of connections")
+	nc := fs.Int("c", 0, "number of connections. it should be > 0.")
 
 	fs.Usage = usage
 	err := fs.Parse(args)
