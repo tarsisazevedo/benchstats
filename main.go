@@ -32,25 +32,20 @@ var usage = func() {
 }
 
 func main() {
-	os.Exit(Main(os.Args[1:]...))
-}
-
-func Main(args ...string) int {
-
 	fs = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	nc := fs.Int("c", 0, "number of connections. it should be > 0.")
 
 	fs.Usage = usage
-	err := fs.Parse(args)
+	err := fs.Parse(os.Args[1:])
 	fsArgs := fs.Args()
 
 	if err != nil {
-		return 2
+		os.Exit(2)
 	}
 
 	if len(fsArgs) == 0 || *nc == 0 {
 		fs.Usage()
-		return 1
+		os.Exit(1)
 	}
 
 	stats := []Stat{}
@@ -64,7 +59,7 @@ func Main(args ...string) int {
 	wg.Wait()
 	sumarize(stats, os.Stdout)
 
-	return 0
+	os.Exit(0)
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
