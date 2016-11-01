@@ -51,7 +51,7 @@ func main() {
 
 func bench(url string, quantity int, stats *[]Stat) {
 	var wg sync.WaitGroup
-	for i := 0; i < nc; i++ {
+	for i := 0; i < quantity; i++ {
 		wg.Add(1)
 		go visit(url, stats, &wg)
 	}
@@ -97,7 +97,6 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatalf("request failed: %v", err)
 	}
-	println("oi", url)
 	done = time.Now()
 	if transferInit.IsZero() {
 		transferInit = done

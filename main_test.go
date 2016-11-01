@@ -43,12 +43,13 @@ Server Tranfer: 0.4s
 }
 
 func TestBench(t *testing.T) {
-	var called int
+	called := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		println("oi")
+		called++
 		w.WriteHeader(http.StatusOK)
-		called += 1
+		w.Write([]byte("ok"))
 	}))
+	defer server.Close()
 	stats := []Stat{}
 	bench(server.URL, 1, &stats)
 	if called != 1 {
