@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
@@ -41,33 +42,46 @@ Server Tranfer: 0.4s
 	}
 }
 
-func runMainForTest(t *testing.T, wantedExit int, args ...string) {
-	exit := Main(args...)
-
-	if exit != wantedExit {
-		t.Fatalf("got exit code %d, but wanted %d", exit, wantedExit)
+func TestBench(t *testing.T) {
+	var called int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		println("oi")
+		w.WriteHeader(http.StatusOK)
+		called += 1
+	}))
+	stats := []Stat{}
+	bench(server.URL, 1, &stats)
+	if called != 1 {
+		t.Fatalf("Expect 1 call. Got %d", called)
+	}
+	called = 0
+	bench(server.URL, 5, &stats)
+	if called != 5 {
+		t.Fatalf("Expect 5 calls. Got %d", called)
 	}
 }
 
-func TestCallWithoutConnectionFlag(t *testing.T) {
+//func runMainForTest(t *testing.T, wantedExit int, args ...string) {
+//exit := Main(args...)
+//if exit != wantedExit {
+//t.Fatalf("got exit code %d, but wanted %d", exit, wantedExit)
+//}
+//}
 
-	called := false
-	usage = func() { called = true }
+//func TestCallWithoutConnectionFlag(t *testing.T) {
+//called := false
+//usage = func() { called = true }
+//runMainForTest(t, 1, "http://dummydomain.com")
+//if !called {
+//t.Error("should call usage without -c flag")
+//}
+//}
 
-	runMainForTest(t, 1, "http://dummydomain.com")
-
-	if !called {
-		t.Error("should call usage without -c flag")
-	}
-}
-
-func TestCallWithoutUrl(t *testing.T) {
-	called := false
-	usage = func() { called = true }
-
-	runMainForTest(t, 1, "-c", "10")
-
-	if !called {
-		t.Error("should call usage wihout url")
-	}
-}
+//func TestCallWithoutUrl(t *testing.T) {
+//called := false
+//usage = func() { called = true }
+//runMainForTest(t, 1, "-c", "10")
+//if !called {
+//t.Error("should call usage wihout url")
+//}
+//}

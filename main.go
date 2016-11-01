@@ -24,42 +24,38 @@ type Stat struct {
 	Total            time.Duration
 }
 
-var fs *flag.FlagSet
-
-var usage = func() {
-	fmt.Printf("Usage: %s [OPTIONS] url\n", os.Args[0])
-	fs.PrintDefaults()
-}
+var nc int
 
 func main() {
-	fs = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	nc := fs.Int("c", 0, "number of connections. it should be > 0.")
-
-	fs.Usage = usage
+	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	fs.IntVar(&nc, "c", 1, "Number of connections. It should be > 0.")
+	fs.Usage = func() {
+		fmt.Printf("Usage: %s [OPTIONS] url\n", os.Args[0])
+		fs.PrintDefaults()
+	}
 	err := fs.Parse(os.Args[1:])
-	fsArgs := fs.Args()
-
 	if err != nil {
 		os.Exit(2)
 	}
-
-	if len(fsArgs) == 0 || *nc == 0 {
+	fsArgs := fs.Args()
+	if len(fsArgs) == 0 || nc == 0 {
 		fs.Usage()
 		os.Exit(1)
 	}
-
 	stats := []Stat{}
 	url := fsArgs[0]
+	bench(url, nc, &stats)
+	sumarize(stats, os.Stdout)
+	os.Exit(0)
+}
 
+func bench(url string, quantity int, stats *[]Stat) {
 	var wg sync.WaitGroup
-	for i := 0; i < *nc; i++ {
+	for i := 0; i < nc; i++ {
 		wg.Add(1)
-		go visit(url, &stats, &wg)
+		go visit(url, stats, &wg)
 	}
 	wg.Wait()
-	sumarize(stats, os.Stdout)
-
-	os.Exit(0)
 }
 
 func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
@@ -101,6 +97,7 @@ func visit(url string, stats *[]Stat, wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatalf("request failed: %v", err)
 	}
+	println("oi", url)
 	done = time.Now()
 	if transferInit.IsZero() {
 		transferInit = done
