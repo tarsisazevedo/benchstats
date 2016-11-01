@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alecthomas/template"
+	"text/template"
 )
 
 type Stat struct {
