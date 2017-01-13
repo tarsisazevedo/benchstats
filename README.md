@@ -9,3 +9,8 @@
     TCP Connections: 0.139763736s
     Server Procesing: 0.152835476s
     Server Tranfer: 4.2688e-05s
+
+# TODO
+    - [ ] reuse connections
+    - [ ] idle time stat
+    - [ ] tls test
