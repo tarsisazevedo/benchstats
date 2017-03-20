@@ -1,6 +1,6 @@
 # Using
 
-    $ go install github.com/tarsisazevedo/benchstats
+    $ go get github.com/tarsisazevedo/benchstats
     $ benchstats <url> <times to access>
 
     $ benchstats http://tarsisazevedo.com 10
