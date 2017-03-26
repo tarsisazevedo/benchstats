@@ -58,6 +58,9 @@ func bench(url string, quantity int, threads int, stats chan Stat) {
 
 func visit(url string, stats chan Stat, tc int, wg *sync.WaitGroup) {
 	defer wg.Done()
+	if !strings.HasPrefix(url, "http") {
+        	url = "http://" + url
+	}
 	for {
 		var dnsStart, dnsDone, connDone, gotConn, transferInit, done time.Time
 		req, err := http.NewRequest("GET", url, nil)
